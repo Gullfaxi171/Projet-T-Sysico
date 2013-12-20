@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<script src='vendor/three.js/build/three.min.js'></script>
+<script src='../threex.planets.js'></script>
+<script src='../threex.atmospherematerial.js'></script>
+<!-- include for threex.glowdatgui -->
+<script src='vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
+<script src="../threex.atmospheredatgui.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/libs/stats.min.js"></script>
+<body style='margin: 0px; background-color: #000000; overflow: hidden;'><script>
+	// si webGL incompatible, message d'erreur
+	if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+	
+	// prototype des fonctions
+	var container, stats;
+	var views, scene, renderer;
+	var mesh, group1, group2, group3, group4, light;
+	var mouseX = 0, mouseY = 0;
+	var windowWidth, windowHeight;
+	
+	// division de l'écran
+	var views = [
+				{ 
+					left: 0,
+					bottom: 0,
+					width: 0.5,
+					height: 0.5,
+					background: new THREE.Color().setRGB( 0.5, 0.5, 0.7 ),
+					eye: [ 0, 20, 20 ],
+					up: [ 0, 1, 0 ],
+					fov: 1,
+					updateCamera: function ( camera, scene, mouseX, mouseY ) {
+					  camera.position.x += mouseX * 0.05;
+					  camera.position.x = Math.max( Math.min( camera.position.x, 2000 ), -2000 );
+					  camera.lookAt( scene.position );
+					}
+				},
+				{ 
+					left: 0,
+					bottom: 0.5,
+					width: 0.5,
+					height: 0.5,
+					background: new THREE.Color().setRGB( 0.2, 0.5, 0.7 ),
+					eye: [ 0, 20, -20 ],
+					up: [ 0, 1, 0 ],
+					fov: 1,
+					updateCamera: function ( camera, scene, mouseX, mouseY ) {
+					  camera.position.x += mouseX * 0.05;
+					  camera.position.x = Math.max( Math.min( camera.position.x, 2000 ), -2000 );
+					  camera.lookAt( scene.position );
+					}
+				},
+				{ 
+					left: 0.5,
+					bottom: 0,
+					width: 0.5,
+					height: 0.5,
+					background: new THREE.Color().setRGB( 0.7, 0.5, 0.5 ),
+					eye: [ 0, -20, 20 ],
+					up: [ 0, 1, 0 ],
+					fov: 1,
+					updateCamera: function ( camera, scene, mouseX, mouseY ) {
+					  camera.position.x -= mouseX * 0.05;
+					  camera.position.x = Math.max( Math.min( camera.position.x, 2000 ), -2000 );
+					  camera.lookAt( camera.position.clone().setY( 0 ) );
+					}
+				},
+				{ 
+					left: 0.5,
+					bottom: 0.5,
+					width: 0.5,
+					height: 0.5,
+					background: new THREE.Color().setRGB( 0.5, 0.7, 0.7 ),
+					eye: [ 0, -20, -20 ],
+					up: [ 0, 1, 0 ],
+					fov: 1,
+					updateCamera: function ( camera, scene, mouseX, mouseY ) {
+					  camera.position.y -= mouseX * 0.05;
+					  camera.position.y = Math.max( Math.min( camera.position.y, 1600 ), -1600 );
+					  camera.lookAt( scene.position );
+					}
+				}
+			];
+	
+	
+	// renderer
+	var renderer	= new THREE.WebGLRenderer({
+		antialias	: true
+	});
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+	renderer.shadowMapEnabled	= true
+	
+	var onRenderFcts= [];
+	
+	
+	
+	
+		for (var ii =  0; ii < views.length; ++ii ) {
+
+					var view = views[ii];
+					camera = new THREE.PerspectiveCamera( view.fov, window.innerWidth / window.innerHeight, 0.01, 100 );
+					camera.position.x = view.eye[ 0 ];
+					camera.position.y = view.eye[ 1 ];
+					camera.position.z = view.eye[ 2 ];
+					camera.up.x = view.up[ 0 ];
+					camera.up.y = view.up[ 1 ];
+					camera.up.z = view.up[ 2 ];
+					view.camera = camera;
+				}
+	
+	
+	var scene	= new THREE.Scene();
+	// ancienne camera
+	//var camera	= new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 100 );
+	//camera.position.z = 1;
+	
+	
+	
+
+	
+	
+	
+
+	var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		add starfield							//
+	//////////////////////////////////////////////////////////////////////////////////
+	
+	var geometry	= new THREE.SphereGeometry(90, 32, 32)
+	var material	= new THREE.MeshBasicMaterial({
+		map	: THREE.ImageUtils.loadTexture('images/galaxy_starfield.png'),
+		side	: THREE.BackSide
+	})
+	var starSphere	= new THREE.Mesh(geometry, material)
+	scene.add(starSphere)
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		add an object and make it move					//
+	//////////////////////////////////////////////////////////////////////////////////
+
+	var containerEarth	= new THREE.Object3D()
+	containerEarth.rotateZ(-23.4 * Math.PI/180)
+	containerEarth.position.z	= 0
+	scene.add(containerEarth)
+
+	// ajout de la Terre
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= new THREE.MeshPhongMaterial({
+		map		: THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL+'images/earthmap1k.jpg'),
+		bumpMap		: THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL+'images/earthbump1k.jpg'),
+		bumpScale	: 0.05,
+		specularMap	: THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL+'images/earthspec1k.jpg'),
+		specular	: new THREE.Color('grey'),
+	})
+	var earthMesh	= new THREE.Mesh(geometry, material)
+	containerEarth.add(earthMesh)
+
+	// on génère l'atmosphère grâce à THREEx.js
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.8
+	material.uniforms.power.value		= 2.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.01);
+	containerEarth.add( mesh );
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.5
+	material.uniforms.power.value		= 4.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.15);
+	containerEarth.add( mesh );
+
+	var earthCloud	= THREEx.Planets.createEarthCloud()
+	earthCloud.receiveShadow	= true
+	earthCloud.castShadow	= true
+	containerEarth.add(earthCloud)
+	onRenderFcts.push(function(delta, now){
+		earthCloud.rotation.y += 1/8 * delta;		
+	})
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		Camera Controls							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var mouse	= {x : 0, y : 0}
+	document.addEventListener('mousemove', function(event){
+		mouse.x	= (event.clientX / window.innerWidth ) - 0.5
+		mouse.y	= (event.clientY / window.innerHeight) - 0.5
+	}, false)
+	onRenderFcts.push(function(delta, now){
+		camera.position.x += (mouse.x*5 - camera.position.x) * (delta*3)
+		camera.position.y += (mouse.y*5 - camera.position.y) * (delta*3)
+		camera.lookAt( scene.position )
+	})
+
+
+	//////////////////////////////////////////////////////////////////////////////////
+	//		render the scene						//
+	//////////////////////////////////////////////////////////////////////////////////
+	/*function updateSize() {
+
+				if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
+
+					windowWidth  = window.innerWidth;
+					windowHeight = window.innerHeight;
+
+					renderer.setSize ( windowWidth, windowHeight );
+
+				}
+
+			}*/
+	
+	
+	onRenderFcts.push(function(){
+		//updateSize();
+		for ( var ii = 0; ii < views.length; ++ii ) {
+			view = views[ii];
+			camera = view.camera;
+			var left   = Math.floor( windowWidth  * view.left );
+			var bottom = Math.floor( windowHeight * view.bottom );
+			var width  = Math.floor( windowWidth  * view.width );
+			var height = Math.floor( windowHeight * view.height );
+			renderer.setViewport( left, bottom, width, height );
+			renderer.setScissor( left, bottom, width, height );
+			renderer.enableScissorTest ( true );
+			//renderer.setClearColor( view.background );
+
+			camera.aspect = width / height;
+			camera.updateProjectionMatrix();
+		
+			renderer.render( scene, camera );
+
+			}
+	})
+	
+	//////////////////////////////////////////////////////////////////////////////////
+	//		loop runner							//
+	//////////////////////////////////////////////////////////////////////////////////
+	var lastTimeMsec= null
+	requestAnimationFrame(function animate(nowMsec){
+		// keep looping
+		requestAnimationFrame( animate );
+		// measure time
+		lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+		var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+		lastTimeMsec	= nowMsec
+		// call each update function
+		onRenderFcts.forEach(function(onRenderFct){
+			onRenderFct(deltaMsec/1000, nowMsec/1000)
+		})
+	})
+</script></body>

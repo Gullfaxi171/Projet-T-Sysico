@@ -1,0 +1,10 @@
+1) Créer une Terre avec une atmosphère en mouvement
+Terre générée directement en three.js
+Atmosphère grâce à un fork, THREEx.js
+
+2) Division en 4 écrans avec 4 caméras
+
+3) Réalisation du prisme, en utilisant l'effet Pepper's Ghost
+http://en.wikipedia.org/wiki/Pepper's_ghost
+
+4) Implémentation du LeapMotion
