@@ -1,0 +1,12 @@
+Page d'accueuil
+	Zaloeil
+	Raccouci vers des Hologrammes Récents/Favoris
+	Menu
+
+Page de gestion des hologrammes
+	Banque d'exemples
+	Banque des produits importés
+
+Page d'affichage
+	4 images
+	contrôle par clavier pour revenir à la page precedente
