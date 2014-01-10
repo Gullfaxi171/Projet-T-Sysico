@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Hologram 2.11</title>
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {
+	color: #000;
+	font-family: Monospace;
+	font-size: 13px;
+	text-align: center;
+	background-color: #fff;
+	margin: 0px;
+	overflow: hidden;
+}
+
+#info {
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	padding: 5px;
+}
+
+a {
+	color: #0080ff;
+}
+</style>
+</head>
+<body>
+	<div id="container"></div>
+
+	<!--importation des bibliothèques nécessaires-->
+	<script src="../vendor/three.js/build/three.min.js"></script>
+	<script src="../js/Detector.js"></script>
+	<script src="../js/libs/stats.min.js"></script>
+	<script src="../scripts/leap.min.js"></script>
+	<script src='../vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
+	<script src="../views/views-calibrage.js"></script>
+	
+	<script src="../js/loaders/OBJLoader.js"></script>
+
+	<!-- LEAP SCRIPT -->
+	<script src="../lib/leap.js"></script>
+
+	<!-- LEAP CONTROL -->
+	<script src="../LeapControls.js"></script>
+
+	<script>
+		// si l'appareil n'est pas compatible avec WebGL, message d'erreur
+		if (!Detector.webgl)
+			Detector.addGetWebGLMessage();
+
+		// on cache la souris
+		//document.body.style.cursor = 'none';
+
+		// variables principales
+		var container, stats;
+		var views, scene, renderer;
+		var mesh, group1, group2, group3, light;
+		var mouseX = 0, mouseY = 0;
+		var windowWidth, windowHeight;
+
+		var onRenderFcts= [];
+
+		var windowHalfX = window.innerWidth / 2;
+		var windowHalfY = window.innerHeight / 2;
+
+		
+		
+		// Fonctions d'initation de la scène
+		init();
+		animate();
+
+		//map function to be used to map values from leap into proper degrees (0-360)
+		function map(value, inputMin, inputMax, outputMin, outputMax) {
+			outVal = ((value - inputMin) / (inputMax - inputMin)
+					* (outputMax - outputMin) + outputMin);
+			if (outVal > outputMax) {
+				outVal = outputMax;
+			}
+			if (outVal < outputMin) {
+				outVal = outputMin;
+			}
+			return outVal;
+		}
+
+		// définition de la fonction d'initalisation de la scène
+		function init() {
+
+			container = document.getElementById('container');
+
+			// pour chaque vue, on place la caméra dans une situation initiale
+			for (var ii = 0; ii < views.length; ++ii) {
+
+				var view = views[ii];
+				camera = new THREE.PerspectiveCamera(view.fov,
+						window.innerWidth / window.innerHeight, 1, 10000);
+				camera.position.x = view.eye[0];
+				camera.position.y = view.eye[1];
+				camera.position.z = view.eye[2];
+				camera.up.x = view.up[0];
+				camera.up.y = view.up[1];
+				camera.up.z = view.up[2];
+				view.camera = camera;
+			}
+
+			
+			scene = new THREE.Scene();
+
+			// Ajout des lumières
+
+			
+			// LUMIERES THREEx.JS
+			var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+			
+
+			renderer = new THREE.WebGLRenderer({
+				antialias : true,
+				alpha : false
+			});
+			renderer.setSize(window.innerWidth, window.innerHeight);
+
+			container.appendChild(renderer.domElement);
+
+			document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+		}
+
+		// Fonction qui relève la position de la souris
+		function onDocumentMouseMove(event) {
+
+			mouseX = (event.clientX - windowWidth / 2);
+			mouseY = (event.clientY - windowHeight / 2);
+
+		}
+
+		// Fonction qui met à jours les tailles des cadres si on redimensionne la fenêtre
+		function updateSize() {
+
+			if (windowWidth != window.innerWidth
+					|| windowHeight != window.innerHeight) {
+
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+
+				renderer.setSize(windowWidth, windowHeight);
+
+			}
+
+		}
+
+		// Fonction qui lance l'animation de la scène
+		function animate() {
+			render();
+			requestAnimationFrame(animate);
+		}
+
+		// Fonction de rendu
+		function render() {
+
+			updateSize();
+
+			for (var ii = 0; ii < views.length; ++ii) {
+
+				view = views[ii];
+				camera = view.camera;
+
+				view.updateCamera(camera, scene, mouseX, mouseY);
+
+				var left = Math.floor(windowHeight * view.left);
+				var bottom = Math.floor(windowHeight * view.bottom);
+				var width = Math.floor(windowHeight * view.width);
+				var height = Math.floor(windowHeight * view.height);
+				renderer.setViewport(left, bottom, width, height);
+				renderer.setScissor(left, bottom, width, height);
+				renderer.enableScissorTest(true);
+				renderer.setClearColor(view.background);
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.render(scene, camera);
+			}
+
+		}
+
+		//////////////////////////////////////////////////////////////////////////////////
+		//		loop runner							//
+		//////////////////////////////////////////////////////////////////////////////////
+		var lastTimeMsec= null
+		requestAnimationFrame(function animate(nowMsec){
+			// keep looping
+			requestAnimationFrame( animate );
+			// measure time
+			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec	= nowMsec
+			// call each update function
+			onRenderFcts.forEach(function(onRenderFct){
+				onRenderFct(deltaMsec/1000, nowMsec/1000)
+			})
+		})
+	</script>
+
+</body>
+</html>

@@ -65,7 +65,7 @@ a {
 		var mouseX = 0, mouseY = 0;
 		var windowWidth, windowHeight;
 
-		var clock = new THREE.Clock();
+		var onRenderFcts= [];
 
 
 		// Fonctions d'initation de la scène
@@ -125,90 +125,76 @@ a {
 			scene.add(light);*/
 			
 			// LUMIERES THREEx.JS
-			var light = new THREE.AmbientLight(0x888888)
-			scene.add(light)
-			// var light	= new THREE.DirectionalLight( 'white', 1)
-			// light.position.set(5,5,5)
-			// light.target.position.set( 0, 0, 0 )
-			// scene.add( light )
+			var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
 
-			var light = new THREE.DirectionalLight(0xcccccc, 1)
-			light.position.set(5, 5, 5)
-			scene.add(light)
-			light.castShadow = true
-			light.shadowCameraNear = 0.01
-			light.shadowCameraFar = 15
-			light.shadowCameraFov = 45
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
 
-			light.shadowCameraLeft = -1
-			light.shadowCameraRight = 1
-			light.shadowCameraTop = 1
-			light.shadowCameraBottom = -1
-			// light.shadowCameraVisible	= true
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
 
-			light.shadowBias = 0.001
-			light.shadowDarkness = 0.2
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
 
-			light.shadowMapWidth = 1024 * 2
-			light.shadowMapHeight = 1024 * 2
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
 
-			// ajout de la Terre
-			var geometry4 = new THREE.SphereGeometry(1, 32, 32);
+	var containerEarth	= new THREE.Object3D()
+	containerEarth.rotateZ(-23.4 * Math.PI/180)
+	containerEarth.position.z	= 0
+	scene.add(containerEarth)
+	var moonMesh	= THREEx.Planets.createMoon()
+	moonMesh.position.set(0.5,0.5,0.5)
+	moonMesh.scale.multiplyScalar(1/5)
+	moonMesh.receiveShadow	= true
+	moonMesh.castShadow	= true
+	containerEarth.add(moonMesh)
 
-			var materials = [
+	var earthMesh	= THREEx.Planets.createEarth()
+	earthMesh.receiveShadow	= true
+	earthMesh.castShadow	= true
+	containerEarth.add(earthMesh)
+	onRenderFcts.push(function(delta, now){
+		earthMesh.rotation.y += 1/32 * delta;		
+	})
 
-			new THREE.MeshPhongMaterial({
-				map : THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL
-						+ 'images/earthmap1k.jpg'),
-				bumpMap : THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL
-						+ 'images/earthbump1k.jpg'),
-				bumpScale : 0.05,
-				specularMap : THREE.ImageUtils
-						.loadTexture(THREEx.Planets.baseURL
-								+ 'images/earthspec1k.jpg'),
-				specular : new THREE.Color('grey'),
-			})
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.8
+	material.uniforms.power.value		= 2.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.01);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
 
-			];
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.5
+	material.uniforms.power.value		= 4.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.15);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
 
-			group3 = THREE.SceneUtils.createMultiMaterialObject(geometry4,
-					materials);
-
-			var containerEarth = new THREE.Object3D()
-			containerEarth.rotateY(-23.4 * Math.PI / 180)
-			containerEarth.position.z = 0
-			scene.add(containerEarth)
-
-			containerEarth.add(group3)
-
-			// On génère l'atmosphère grâce à THREEx.js
-			var geometry = new THREE.SphereGeometry(1, 32, 32)
-			var material = THREEx.createAtmosphereMaterial()
-			material.uniforms.glowColor.value.set(0x00b3ff)
-			material.uniforms.coeficient.value = 0.8
-			material.uniforms.power.value = 2.0
-			var mesh = new THREE.Mesh(geometry, material);
-			mesh.scale.multiplyScalar(1.01);
-			containerEarth.add(mesh);
-			
-			var geometry = new THREE.SphereGeometry(1, 32, 32)
-			var material = THREEx.createAtmosphereMaterial()
-			material.side = THREE.BackSide
-			material.uniforms.glowColor.value.set(0x00b3ff)
-			material.uniforms.coeficient.value = 0.5
-			material.uniforms.power.value = 4.0
-			var mesh = new THREE.Mesh(geometry, material);
-			mesh.scale.multiplyScalar(1.15);
-			containerEarth.add(mesh);
-
-			// On ajoute une couche de nuages
-			var earthCloud = THREEx.Planets.createEarthCloud()
-			earthCloud.receiveShadow = true
-			earthCloud.castShadow = true
-			containerEarth.add(earthCloud)
-			/*onRenderFcts.push(function(delta, now){
-			earthCloud.rotation.y += 1/8 * delta;		
-			})*/
+	var earthCloud	= THREEx.Planets.createEarthCloud()
+	earthCloud.receiveShadow	= true
+	earthCloud.castShadow	= true
+	containerEarth.add(earthCloud)
+	onRenderFcts.push(function(delta, now){
+		earthCloud.rotation.y += 1/8 * delta;		
+	})
 
 			// On mappe les étoiles sur une sphère
 			var geometry = new THREE.SphereGeometry(9, 32, 32)
@@ -294,7 +280,22 @@ a {
 
 		}
 
-		leapInit();
+		//////////////////////////////////////////////////////////////////////////////////
+		//		loop runner							//
+		//////////////////////////////////////////////////////////////////////////////////
+		var lastTimeMsec= null
+		requestAnimationFrame(function animate(nowMsec){
+			// keep looping
+			requestAnimationFrame( animate );
+			// measure time
+			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec	= nowMsec
+			// call each update function
+			onRenderFcts.forEach(function(onRenderFct){
+				onRenderFct(deltaMsec/1000, nowMsec/1000)
+			})
+		})
 	</script>
 
 </body>

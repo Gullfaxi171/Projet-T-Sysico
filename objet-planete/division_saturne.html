@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Hologram 2.11</title>
+<title>Hologram support</title>
 <meta charset="utf-8">
 <meta name="viewport"
 	content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -41,7 +41,6 @@ a {
 	<script src='../threex.atmospherematerial.js'></script>
 	<script src='vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
 	<script src="../threex.atmospheredatgui.js"></script>
-	
 	<script src="views.js"></script>
 
 	<!-- LEAP SCRIPT -->
@@ -56,7 +55,7 @@ a {
 			Detector.addGetWebGLMessage();
 
 		// on cache la souris
-		//document.body.style.cursor = 'none';
+		document.body.style.cursor = 'none';
 
 		// variables principales
 		var container, stats;
@@ -66,7 +65,6 @@ a {
 		var windowWidth, windowHeight;
 
 		var clock = new THREE.Clock();
-
 
 		// Fonctions d'initation de la scène
 		init();
@@ -114,17 +112,6 @@ a {
 
 			// Ajout des lumières
 
-			
-			// LUMIERES PERSO
-			// add subtle blue ambient lighting
-			/*var ambientLight = new THREE.AmbientLight(0x000211);
-			scene.add(ambientLight);
-
-			light = new THREE.DirectionalLight(0xffffff);
-			light.position.set(0, 0, 1);
-			scene.add(light);*/
-			
-			// LUMIERES THREEx.JS
 			var light = new THREE.AmbientLight(0x888888)
 			scene.add(light)
 			// var light	= new THREE.DirectionalLight( 'white', 1)
@@ -152,63 +139,17 @@ a {
 			light.shadowMapWidth = 1024 * 2
 			light.shadowMapHeight = 1024 * 2
 
-			// ajout de la Terre
-			var geometry4 = new THREE.SphereGeometry(1, 32, 32);
+			// Affichage de Saturne
 
-			var materials = [
+			var mesh = THREEx.Planets.createSaturn()
+			mesh.receiveShadow = true
+			mesh.castShadow = true
+			var ring = THREEx.Planets.createSaturnRing()
+			ring.receiveShadow = true
+			ring.castShadow = true
+			mesh.add(ring)
 
-			new THREE.MeshPhongMaterial({
-				map : THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL
-						+ 'images/earthmap1k.jpg'),
-				bumpMap : THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL
-						+ 'images/earthbump1k.jpg'),
-				bumpScale : 0.05,
-				specularMap : THREE.ImageUtils
-						.loadTexture(THREEx.Planets.baseURL
-								+ 'images/earthspec1k.jpg'),
-				specular : new THREE.Color('grey'),
-			})
-
-			];
-
-			group3 = THREE.SceneUtils.createMultiMaterialObject(geometry4,
-					materials);
-
-			var containerEarth = new THREE.Object3D()
-			containerEarth.rotateY(-23.4 * Math.PI / 180)
-			containerEarth.position.z = 0
-			scene.add(containerEarth)
-
-			containerEarth.add(group3)
-
-			// On génère l'atmosphère grâce à THREEx.js
-			var geometry = new THREE.SphereGeometry(1, 32, 32)
-			var material = THREEx.createAtmosphereMaterial()
-			material.uniforms.glowColor.value.set(0x00b3ff)
-			material.uniforms.coeficient.value = 0.8
-			material.uniforms.power.value = 2.0
-			var mesh = new THREE.Mesh(geometry, material);
-			mesh.scale.multiplyScalar(1.01);
-			containerEarth.add(mesh);
-			
-			var geometry = new THREE.SphereGeometry(1, 32, 32)
-			var material = THREEx.createAtmosphereMaterial()
-			material.side = THREE.BackSide
-			material.uniforms.glowColor.value.set(0x00b3ff)
-			material.uniforms.coeficient.value = 0.5
-			material.uniforms.power.value = 4.0
-			var mesh = new THREE.Mesh(geometry, material);
-			mesh.scale.multiplyScalar(1.15);
-			containerEarth.add(mesh);
-
-			// On ajoute une couche de nuages
-			var earthCloud = THREEx.Planets.createEarthCloud()
-			earthCloud.receiveShadow = true
-			earthCloud.castShadow = true
-			containerEarth.add(earthCloud)
-			/*onRenderFcts.push(function(delta, now){
-			earthCloud.rotation.y += 1/8 * delta;		
-			})*/
+			scene.add(mesh)
 
 			// On mappe les étoiles sur une sphère
 			var geometry = new THREE.SphereGeometry(9, 32, 32)
@@ -257,10 +198,6 @@ a {
 
 		// Fonction qui lance l'animation de la scène
 		function animate() {
-			/*controls1.update(clock.getDelta() );
-			controls2.update(clock.getDelta() );
-			controls3.update(clock.getDelta() );
-			controls4.update(clock.getDelta() );*/
 			render();
 			requestAnimationFrame(animate);
 		}
@@ -293,8 +230,6 @@ a {
 			}
 
 		}
-
-		leapInit();
 	</script>
 
 </body>

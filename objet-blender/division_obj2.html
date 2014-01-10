@@ -33,22 +33,20 @@ a {
 	<div id="container"></div>
 
 	<!--importation des bibliothèques nécessaires-->
-	<script src="vendor/three.js/build/three.min.js"></script>
-	<script src="js/Detector.js"></script>
-	<script src="js/libs/stats.min.js"></script>
-	<script src="scripts/leap.min.js"></script>
-	<script src='../threex.planets.js'></script>
-	<script src='../threex.atmospherematerial.js'></script>
-	<script src='vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
-	<script src="../threex.atmospheredatgui.js"></script>
+	<script src="../vendor/three.js/build/three.min.js"></script>
+	<script src="../js/Detector.js"></script>
+	<script src="../js/libs/stats.min.js"></script>
+	<script src="../scripts/leap.min.js"></script>
+	<script src='../vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
+	<script src="../views/views.js"></script>
 	
-	<script src="views.js"></script>
+	<script src="../js/loaders/OBJLoader.js"></script>
 
 	<!-- LEAP SCRIPT -->
-	<script src="lib/leap.js"></script>
+	<script src="../lib/leap.js"></script>
 
 	<!-- LEAP CONTROL -->
-	<script src="LeapControls.js"></script>
+	<script src="../LeapControls.js"></script>
 
 	<script>
 		// si l'appareil n'est pas compatible avec WebGL, message d'erreur
@@ -56,7 +54,7 @@ a {
 			Detector.addGetWebGLMessage();
 
 		// on cache la souris
-		//document.body.style.cursor = 'none';
+		document.body.style.cursor = 'none';
 
 		// variables principales
 		var container, stats;
@@ -65,9 +63,13 @@ a {
 		var mouseX = 0, mouseY = 0;
 		var windowWidth, windowHeight;
 
-		var clock = new THREE.Clock();
+		var onRenderFcts= [];
 
+		var windowHalfX = window.innerWidth / 2;
+		var windowHalfY = window.innerHeight / 2;
 
+		
+		
 		// Fonctions d'initation de la scène
 		init();
 		animate();
@@ -105,116 +107,91 @@ a {
 				view.camera = camera;
 			}
 
-			/*controls1 = new THREE.LeapControls(views[1].camera);
-			controls2 = new THREE.LeapControls(views[2].camera);
-			controls3 = new THREE.LeapControls(views[3].camera);
-			controls4 = new THREE.LeapControls(views[4].camera);*/
-
+			
 			scene = new THREE.Scene();
 
 			// Ajout des lumières
 
 			
-			// LUMIERES PERSO
-			// add subtle blue ambient lighting
-			/*var ambientLight = new THREE.AmbientLight(0x000211);
-			scene.add(ambientLight);
-
-			light = new THREE.DirectionalLight(0xffffff);
-			light.position.set(0, 0, 1);
-			scene.add(light);*/
-			
 			// LUMIERES THREEx.JS
-			var light = new THREE.AmbientLight(0x888888)
-			scene.add(light)
-			// var light	= new THREE.DirectionalLight( 'white', 1)
-			// light.position.set(5,5,5)
-			// light.target.position.set( 0, 0, 0 )
-			// scene.add( light )
+			var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
 
-			var light = new THREE.DirectionalLight(0xcccccc, 1)
-			light.position.set(5, 5, 5)
-			scene.add(light)
-			light.castShadow = true
-			light.shadowCameraNear = 0.01
-			light.shadowCameraFar = 15
-			light.shadowCameraFov = 45
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
 
-			light.shadowCameraLeft = -1
-			light.shadowCameraRight = 1
-			light.shadowCameraTop = 1
-			light.shadowCameraBottom = -1
-			// light.shadowCameraVisible	= true
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
 
-			light.shadowBias = 0.001
-			light.shadowDarkness = 0.2
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
 
-			light.shadowMapWidth = 1024 * 2
-			light.shadowMapHeight = 1024 * 2
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
 
-			// ajout de la Terre
-			var geometry4 = new THREE.SphereGeometry(1, 32, 32);
+	
+	
+	// texture .
 
-			var materials = [
+	var manager = new THREE.LoadingManager();
+	manager.onProgress = function ( item, loaded, total ) {
 
-			new THREE.MeshPhongMaterial({
-				map : THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL
-						+ 'images/earthmap1k.jpg'),
-				bumpMap : THREE.ImageUtils.loadTexture(THREEx.Planets.baseURL
-						+ 'images/earthbump1k.jpg'),
-				bumpScale : 0.05,
-				specularMap : THREE.ImageUtils
-						.loadTexture(THREEx.Planets.baseURL
-								+ 'images/earthspec1k.jpg'),
-				specular : new THREE.Color('grey'),
-			})
+		console.log( item, loaded, total );
 
-			];
+	};
 
-			group3 = THREE.SceneUtils.createMultiMaterialObject(geometry4,
-					materials);
+	var texture = new THREE.Texture();
+	
+	var loader = new THREE.ImageLoader( manager );
+	loader.load( 'obj/clef/cle2.jpg', function ( image ) {
 
-			var containerEarth = new THREE.Object3D()
-			containerEarth.rotateY(-23.4 * Math.PI / 180)
-			containerEarth.position.z = 0
-			scene.add(containerEarth)
+		texture.image = image;
+		texture.needsUpdate = true;
 
-			containerEarth.add(group3)
+	} );
+	
+	
+	
+	// model
 
-			// On génère l'atmosphère grâce à THREEx.js
-			var geometry = new THREE.SphereGeometry(1, 32, 32)
-			var material = THREEx.createAtmosphereMaterial()
-			material.uniforms.glowColor.value.set(0x00b3ff)
-			material.uniforms.coeficient.value = 0.8
-			material.uniforms.power.value = 2.0
-			var mesh = new THREE.Mesh(geometry, material);
-			mesh.scale.multiplyScalar(1.01);
-			containerEarth.add(mesh);
-			
-			var geometry = new THREE.SphereGeometry(1, 32, 32)
-			var material = THREEx.createAtmosphereMaterial()
-			material.side = THREE.BackSide
-			material.uniforms.glowColor.value.set(0x00b3ff)
-			material.uniforms.coeficient.value = 0.5
-			material.uniforms.power.value = 4.0
-			var mesh = new THREE.Mesh(geometry, material);
-			mesh.scale.multiplyScalar(1.15);
-			containerEarth.add(mesh);
+	var loader = new THREE.OBJLoader( manager );
+	loader.load( 'obj/clef/cle2.obj', function ( object ) {
 
-			// On ajoute une couche de nuages
-			var earthCloud = THREEx.Planets.createEarthCloud()
-			earthCloud.receiveShadow = true
-			earthCloud.castShadow = true
-			containerEarth.add(earthCloud)
-			/*onRenderFcts.push(function(delta, now){
-			earthCloud.rotation.y += 1/8 * delta;		
-			})*/
+		object.traverse( function ( child ) {
+
+			if ( child instanceof THREE.Mesh ) {
+
+				child.material.map = texture;
+
+			}
+
+		} );
+
+		object.position.y = 0;
+		scene.add( object );
+
+	} );
+	
+	
+	
+	
+	
+	
+	
 
 			// On mappe les étoiles sur une sphère
 			var geometry = new THREE.SphereGeometry(9, 32, 32)
 			var material = new THREE.MeshBasicMaterial({
 				map : THREE.ImageUtils
-						.loadTexture('images/galaxy_starfield.png'),
+						.loadTexture('../images/galaxy_starfield.png'),
 				side : THREE.BackSide
 			})
 			var starSphere = new THREE.Mesh(geometry, material)
@@ -257,10 +234,6 @@ a {
 
 		// Fonction qui lance l'animation de la scène
 		function animate() {
-			/*controls1.update(clock.getDelta() );
-			controls2.update(clock.getDelta() );
-			controls3.update(clock.getDelta() );
-			controls4.update(clock.getDelta() );*/
 			render();
 			requestAnimationFrame(animate);
 		}
@@ -294,7 +267,22 @@ a {
 
 		}
 
-		leapInit();
+		//////////////////////////////////////////////////////////////////////////////////
+		//		loop runner							//
+		//////////////////////////////////////////////////////////////////////////////////
+		var lastTimeMsec= null
+		requestAnimationFrame(function animate(nowMsec){
+			// keep looping
+			requestAnimationFrame( animate );
+			// measure time
+			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec	= nowMsec
+			// call each update function
+			onRenderFcts.forEach(function(onRenderFct){
+				onRenderFct(deltaMsec/1000, nowMsec/1000)
+			})
+		})
 	</script>
 
 </body>
