@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Hologram 2.11</title>
+<title>Hologram support</title>
 <meta charset="utf-8">
 <meta name="viewport"
 	content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
@@ -61,16 +61,11 @@ a {
 		var mouseX = 0, mouseY = 0;
 		var windowWidth, windowHeight;
 
-		var onRenderFcts= [];
-
+		//var clock = new THREE.Clock();
+		
 		var cameraControls;
-
-		// Fonctions d'initation de la scène
-		init();
-		animate();
 		
-		
-		//map function to be used to map values from leap into proper degrees (0-360)
+				//map function to be used to map values from leap into proper degrees (0-360)
         function map(value, inputMin, inputMax, outputMin, outputMax){
         outVal = ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
         if(outVal >  outputMax){
@@ -89,14 +84,28 @@ a {
 		
 		
 		
-        //initiate variables
+        //iniatite variables
         var firstValidFrame = null
         var cameraRadius = 290
         var rotateY = 90, rotateX = 0, curY = 0
         var fov = 1.57;
-        
-        
 
+		// Fonctions d'initation de la scène
+		init();
+		animate();
+
+		//map function to be used to map values from leap into proper degrees (0-360)
+		function map(value, inputMin, inputMax, outputMin, outputMax) {
+			outVal = ((value - inputMin) / (inputMax - inputMin)
+					* (outputMax - outputMin) + outputMin);
+			if (outVal > outputMax) {
+				outVal = outputMax;
+			}
+			if (outVal < outputMin) {
+				outVal = outputMin;
+			}
+			return outVal;
+		}
 
 		// définition de la fonction d'initalisation de la scène
 		function init() {
@@ -115,107 +124,57 @@ a {
 				camera.up.x = view.up[0];
 				camera.up.y = view.up[1];
 				camera.up.z = view.up[2];
-				
 				view.camera = camera;
-				
 			}
 
-			
-			
-			
-			
-			
-			
-		
-			
-
 			scene = new THREE.Scene();
-			
-			// LUMIERES THREEx.JS
-			var light	= new THREE.AmbientLight( 0xffffff )
-	scene.add( light )
 
-	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
-	light.position.set(5,5,5)
-	scene.add( light )
-	light.castShadow	= true
-	light.shadowCameraNear	= 0.01
-	light.shadowCameraFar	= 15
-	light.shadowCameraFov	= 45
+			// Ajout des lumières
 
-	light.shadowCameraLeft	= -1
-	light.shadowCameraRight	=  1
-	light.shadowCameraTop	=  1
-	light.shadowCameraBottom= -1
-	// light.shadowCameraVisible	= true
+			var light = new THREE.AmbientLight(0x888888)
+			scene.add(light)
 
-	light.shadowBias	= 0.001
-	light.shadowDarkness	= 0.2
+			var light = new THREE.DirectionalLight(0xcccccc, 1)
+			light.position.set(5, 5, 5)
+			scene.add(light)
+			light.castShadow = true
+			light.shadowCameraNear = 0.01
+			light.shadowCameraFar = 15
+			light.shadowCameraFov = 45
 
-	light.shadowMapWidth	= 1024
-	light.shadowMapHeight	= 1024
+			light.shadowCameraLeft = -1
+			light.shadowCameraRight = 1
+			light.shadowCameraTop = 1
+			light.shadowCameraBottom = -1
+			// light.shadowCameraVisible	= true
 
-	var containerEarth	= new THREE.Object3D()
-	containerEarth.rotateZ(-23.4 * Math.PI/180)
-	containerEarth.position.z	= 0
-	scene.add(containerEarth)
-	var moonMesh	= THREEx.Planets.createMoon()
-	moonMesh.position.set(0.5,0.5,0.5)
-	moonMesh.scale.multiplyScalar(1/5)
-	moonMesh.receiveShadow	= true
-	moonMesh.castShadow	= true
-	containerEarth.add(moonMesh)
-	onRenderFcts.push(function(delta, now){
-		moonMesh.rotation.y += 1/16 * delta;
-		moonMesh.position.set(0.7 * Math.cos( now / 3.14 ),0, 0.7 * Math.sin( now / 3.14 ) );
-	})
+			light.shadowBias = 0.001
+			light.shadowDarkness = 0.2
 
-	var earthMesh	= THREEx.Planets.createEarth()
-	earthMesh.receiveShadow	= true
-	earthMesh.castShadow	= true
-	containerEarth.add(earthMesh)
-	onRenderFcts.push(function(delta, now){
-		earthMesh.rotation.y += 1/32 * delta;		
-	})
+			light.shadowMapWidth = 1024 * 2
+			light.shadowMapHeight = 1024 * 2
 
-	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
-	var material	= THREEx.createAtmosphereMaterial()
-	material.uniforms.glowColor.value.set(0x00b3ff)
-	material.uniforms.coeficient.value	= 0.8
-	material.uniforms.power.value		= 2.0
-	var mesh	= new THREE.Mesh(geometry, material );
-	mesh.scale.multiplyScalar(1.01);
-	containerEarth.add( mesh );
-	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+			// Affichage de Saturne
 
-	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
-	var material	= THREEx.createAtmosphereMaterial()
-	material.side	= THREE.BackSide
-	material.uniforms.glowColor.value.set(0x00b3ff)
-	material.uniforms.coeficient.value	= 0.5
-	material.uniforms.power.value		= 4.0
-	var mesh	= new THREE.Mesh(geometry, material );
-	mesh.scale.multiplyScalar(1.15);
-	containerEarth.add( mesh );
-	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+			var mesh = THREEx.Planets.createSaturn()
+			mesh.receiveShadow = true
+			mesh.castShadow = true
+			var ring = THREEx.Planets.createSaturnRing()
+			ring.receiveShadow = true
+			ring.castShadow = true
+			mesh.add(ring)
 
-	var earthCloud	= THREEx.Planets.createEarthCloud()
-	earthCloud.receiveShadow	= true
-	earthCloud.castShadow	= true
-	containerEarth.add(earthCloud)
-	onRenderFcts.push(function(delta, now){
-		earthCloud.rotation.y += 1/8 * delta;		
-	})
+			scene.add(mesh)
 
 			// On mappe les étoiles sur une sphère
-			/*var geometry = new THREE.SphereGeometry(9, 32, 32)
+			var geometry = new THREE.SphereGeometry(9, 32, 32)
 			var material = new THREE.MeshBasicMaterial({
 				map : THREE.ImageUtils
 						.loadTexture('images/galaxy_starfield.png'),
 				side : THREE.BackSide
 			})
 			var starSphere = new THREE.Mesh(geometry, material)
-			scene.add(starSphere)*/
+			scene.add(starSphere)
 
 			renderer = new THREE.WebGLRenderer({
 				antialias : true,
@@ -251,9 +210,8 @@ a {
 			}
 
 		}
-
 		
-		//request animation frame and connect to leap socket
+				//request animation frame and connect to leap socket
 		Leap.loop(function(frame) {
         if (frame.valid) {
 
@@ -276,10 +234,9 @@ a {
 
 			render();
       });
-		
+
 		// Fonction qui lance l'animation de la scène
 		function animate() {
-			
 			requestAnimationFrame(animate);
 		}
 
@@ -294,8 +251,7 @@ a {
 				camera = view.camera;
 
 				view.updateCamera(camera, scene, rotateX, rotateY);
-				
-				
+
 				var left = Math.floor(windowHeight * view.left);
 				var bottom = Math.floor(windowHeight * view.bottom);
 				var width = Math.floor(windowHeight * view.width);
@@ -312,27 +268,6 @@ a {
 			}
 
 		}
-
-		//////////////////////////////////////////////////////////////////////////////////
-		//		loop runner							//
-		//////////////////////////////////////////////////////////////////////////////////
-		var lastTimeMsec= null
-		requestAnimationFrame(function animate(nowMsec){
-			// keep looping
-			requestAnimationFrame( animate );
-			// measure time
-			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
-			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
-			lastTimeMsec	= nowMsec
-			// call each update function
-			onRenderFcts.forEach(function(onRenderFct){
-				onRenderFct(deltaMsec/1000, nowMsec/1000)
-			})
-		})
-		
-		
-		
-		
 	</script>
 
 </body>
