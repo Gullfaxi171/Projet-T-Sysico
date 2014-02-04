@@ -42,9 +42,9 @@ a {
 	<script src='vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
 	<script src="../threex.atmospheredatgui.js"></script>
 	
-	<script src="views.js"></script>
+	<script src="../views/views_terre_leap.js"></script>
 
-
+<script src="../threeleapcontrols-master/js/leap.min.js"></script>
 
 	<script>
 		// si l'appareil n'est pas compatible avec WebGL, message d'erreur
@@ -52,7 +52,7 @@ a {
 			Detector.addGetWebGLMessage();
 
 		// on cache la souris
-		//document.body.style.cursor = 'none';
+		document.body.style.cursor = 'none';
 
 		// variables principales
 		var container, stats;
@@ -63,23 +63,40 @@ a {
 
 		var onRenderFcts= [];
 
+		var cameraControls;
 
 		// Fonctions d'initation de la scène
 		init();
-		animate();
-
+		//animate();
+		
+		
 		//map function to be used to map values from leap into proper degrees (0-360)
-		function map(value, inputMin, inputMax, outputMin, outputMax) {
-			outVal = ((value - inputMin) / (inputMax - inputMin)
-					* (outputMax - outputMin) + outputMin);
-			if (outVal > outputMax) {
-				outVal = outputMax;
-			}
-			if (outVal < outputMin) {
-				outVal = outputMin;
-			}
-			return outVal;
-		}
+        function map(value, inputMin, inputMax, outputMin, outputMax){
+        outVal = ((value - inputMin) / (inputMax - inputMin) * (outputMax - outputMin) + outputMin);
+        if(outVal >  outputMax){
+          outVal = outputMax;
+        }
+        if(outVal <  outputMin){
+          outVal = outputMin;
+        }
+        return outVal;
+      }
+		
+		
+		
+
+		
+		
+		
+		
+        //initite variables
+        var firstValidFrame = null
+        var cameraRadius = 290
+        var rotateY = 90, rotateX = 0, curY = 0
+        var fov = 1.57;
+        
+        
+
 
 		// définition de la fonction d'initalisation de la scène
 		function init() {
@@ -98,30 +115,24 @@ a {
 				camera.up.x = view.up[0];
 				camera.up.y = view.up[1];
 				camera.up.z = view.up[2];
+				
 				view.camera = camera;
+				
 			}
 
-			/*controls1 = new THREE.LeapControls(views[1].camera);
-			controls2 = new THREE.LeapControls(views[2].camera);
-			controls3 = new THREE.LeapControls(views[3].camera);
-			controls4 = new THREE.LeapControls(views[4].camera);*/
+			
+			
+			
+			
+			
+			
+		
+			
 
 			scene = new THREE.Scene();
-
-			// Ajout des lumières
-
-			
-			// LUMIERES PERSO
-			// add subtle blue ambient lighting
-			/*var ambientLight = new THREE.AmbientLight(0x000211);
-			scene.add(ambientLight);
-
-			light = new THREE.DirectionalLight(0xffffff);
-			light.position.set(0, 0, 1);
-			scene.add(light);*/
 			
 			// LUMIERES THREEx.JS
-			var light	= new THREE.AmbientLight( 0x222222 )
+			var light	= new THREE.AmbientLight( 0xffffff )
 	scene.add( light )
 
 	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
@@ -154,6 +165,10 @@ a {
 	moonMesh.receiveShadow	= true
 	moonMesh.castShadow	= true
 	containerEarth.add(moonMesh)
+	onRenderFcts.push(function(delta, now){
+		moonMesh.rotation.y += 1/16 * delta;
+		moonMesh.position.set(0.7 * Math.cos( now / 3.14 ),0, 0.7 * Math.sin( now / 3.14 ) );
+	})
 
 	var earthMesh	= THREEx.Planets.createEarth()
 	earthMesh.receiveShadow	= true
@@ -193,14 +208,14 @@ a {
 	})
 
 			// On mappe les étoiles sur une sphère
-			var geometry = new THREE.SphereGeometry(9, 32, 32)
+			/*var geometry = new THREE.SphereGeometry(9, 32, 32)
 			var material = new THREE.MeshBasicMaterial({
 				map : THREE.ImageUtils
 						.loadTexture('images/galaxy_starfield.png'),
 				side : THREE.BackSide
 			})
 			var starSphere = new THREE.Mesh(geometry, material)
-			scene.add(starSphere)
+			scene.add(starSphere)*/
 
 			renderer = new THREE.WebGLRenderer({
 				antialias : true,
@@ -237,13 +252,34 @@ a {
 
 		}
 
+		
+		//request animation frame and connect to leap socket
+		Leap.loop(function(frame) {
+        if (frame.valid) {
+
+
+          if (!firstValidFrame) firstValidFrame = frame
+          var t = firstValidFrame.translation(frame)
+
+          //limit y-axis between 0 and 180 degrees
+          curY = map(t[1], -300, 300, 0, 179)
+
+          //assign rotation coordinates
+          rotateX = t[0]
+          rotateY = -curY
+
+          zoom = Math.max(0, t[2] + 200);
+          zoomFactor = 1/(1 + (zoom / 150));
+
+          
+        }
+
+			render();
+      });
+		
 		// Fonction qui lance l'animation de la scène
 		function animate() {
-			/*controls1.update(clock.getDelta() );
-			controls2.update(clock.getDelta() );
-			controls3.update(clock.getDelta() );
-			controls4.update(clock.getDelta() );*/
-			render();
+			
 			requestAnimationFrame(animate);
 		}
 
@@ -257,8 +293,9 @@ a {
 				view = views[ii];
 				camera = view.camera;
 
-				view.updateCamera(camera, scene, mouseX, mouseY);
-
+				view.updateCamera(camera, scene, rotateX, rotateY);
+				
+				
 				var left = Math.floor(windowHeight * view.left);
 				var bottom = Math.floor(windowHeight * view.bottom);
 				var width = Math.floor(windowHeight * view.width);
@@ -292,6 +329,10 @@ a {
 				onRenderFct(deltaMsec/1000, nowMsec/1000)
 			})
 		})
+		
+		
+		
+		
 	</script>
 
 </body>
