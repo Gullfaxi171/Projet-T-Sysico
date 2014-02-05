@@ -32,3 +32,9 @@ right : 0px;
 a {
 color : white;
 }
+
+@media screen and (max-width : 1400px){
+	img {
+	height : 105px;
+	}
+}
