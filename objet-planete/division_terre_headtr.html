@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Hologram 2.11</title>
+<meta charset="utf-8">
+<meta name="viewport"
+	content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {
+	color: #000;
+	font-family: Monospace;
+	font-size: 13px;
+	text-align: center;
+	background-color: #fff;
+	margin: 0px;
+	overflow: hidden;
+}
+
+#info {
+	position: absolute;
+	top: 0px;
+	width: 100%;
+	padding: 5px;
+}
+
+a {
+	color: #0080ff;
+}
+</style>
+</head>
+<body>
+
+
+	<div id="container"></div>
+		<canvas id="inputCanvas" width="320" height="240" style="display:none"></canvas>
+	<video id="inputVideo" autoplay loop></video>
+
+	<!--importation des bibliothèques nécessaires-->
+	<script src="vendor/three.js/build/three.min.js"></script>
+	<script src="js/Detector.js"></script>
+	<script src="js/libs/stats.min.js"></script>
+	
+	<script src='../threex.planets.js'></script>
+	<script src='../threex.atmospherematerial.js'></script>
+	<script src='vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
+	<script src="../threex.atmospheredatgui.js"></script>
+	
+	<script src="../views/views_terre_headtr.js"></script>
+	<script src="../js/headtracking/headtrackr.js"></script>
+	<script src="../js/headtracking/facetrackr.js"></script>
+	
+
+	<script>
+		// si l'appareil n'est pas compatible avec WebGL, message d'erreur
+		if (!Detector.webgl)
+			Detector.addGetWebGLMessage();
+
+		// on cache la souris
+		//document.body.style.cursor = 'none';
+
+		// variables principales
+		var container, stats;
+		var views, scene, renderer;
+		var mesh, group1, group2, group3, light;
+		var mouseX = 0, mouseY = 0;
+		var windowWidth, windowHeight;
+		var headPosX = 150, headPosY = 100;
+
+		var onRenderFcts= [];
+		
+		var videoInput = document.getElementById('inputVideo');
+		var canvasInput = document.getElementById('inputCanvas');
+
+
+		// Fonctions d'initation de la scène
+		init();
+		animate();
+
+		//map function to be used to map values from leap into proper degrees (0-360)
+		function map(value, inputMin, inputMax, outputMin, outputMax) {
+			outVal = ((value - inputMin) / (inputMax - inputMin)
+					* (outputMax - outputMin) + outputMin);
+			if (outVal > outputMax) {
+				outVal = outputMax;
+			}
+			if (outVal < outputMin) {
+				outVal = outputMin;
+			}
+			return outVal;
+		}
+
+		// définition de la fonction d'initalisation de la scène
+		function init() {
+
+			container = document.getElementById('container');
+
+			// pour chaque vue, on place la caméra dans une situation initiale
+			for (var ii = 0; ii < views.length; ++ii) {
+
+				var view = views[ii];
+				camera = new THREE.PerspectiveCamera(view.fov,
+						window.innerWidth / window.innerHeight, 1, 10000);
+				camera.position.x = view.eye[0];
+				camera.position.y = view.eye[1];
+				camera.position.z = view.eye[2];
+				camera.up.x = view.up[0];
+				camera.up.y = view.up[1];
+				camera.up.z = view.up[2];
+				view.camera = camera;
+			}
+
+			/*controls1 = new THREE.LeapControls(views[1].camera);
+			controls2 = new THREE.LeapControls(views[2].camera);
+			controls3 = new THREE.LeapControls(views[3].camera);
+			controls4 = new THREE.LeapControls(views[4].camera);*/
+
+			scene = new THREE.Scene();
+
+			// Ajout des lumières
+
+			
+			// LUMIERES PERSO
+			// add subtle blue ambient lighting
+			/*var ambientLight = new THREE.AmbientLight(0x000211);
+			scene.add(ambientLight);
+
+			light = new THREE.DirectionalLight(0xffffff);
+			light.position.set(0, 0, 1);
+			scene.add(light);*/
+			
+			// LUMIERES THREEx.JS
+			var light	= new THREE.AmbientLight( 0x222222 )
+	scene.add( light )
+
+	var light	= new THREE.DirectionalLight( 0xffffff, 1 )
+	light.position.set(5,5,5)
+	scene.add( light )
+	light.castShadow	= true
+	light.shadowCameraNear	= 0.01
+	light.shadowCameraFar	= 15
+	light.shadowCameraFov	= 45
+
+	light.shadowCameraLeft	= -1
+	light.shadowCameraRight	=  1
+	light.shadowCameraTop	=  1
+	light.shadowCameraBottom= -1
+	// light.shadowCameraVisible	= true
+
+	light.shadowBias	= 0.001
+	light.shadowDarkness	= 0.2
+
+	light.shadowMapWidth	= 1024
+	light.shadowMapHeight	= 1024
+
+	var containerEarth	= new THREE.Object3D()
+	containerEarth.rotateZ(-23.4 * Math.PI/180)
+	containerEarth.position.z	= 0
+	scene.add(containerEarth)
+	var moonMesh	= THREEx.Planets.createMoon()
+	moonMesh.position.set(0.5,0.5,0.5)
+	moonMesh.scale.multiplyScalar(1/5)
+	moonMesh.receiveShadow	= true
+	moonMesh.castShadow	= true
+	containerEarth.add(moonMesh)
+
+	var earthMesh	= THREEx.Planets.createEarth()
+	earthMesh.receiveShadow	= true
+	earthMesh.castShadow	= true
+	containerEarth.add(earthMesh)
+	onRenderFcts.push(function(delta, now){
+		earthMesh.rotation.y += 1/32 * delta;		
+	})
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.8
+	material.uniforms.power.value		= 2.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.01);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+
+	var geometry	= new THREE.SphereGeometry(0.5, 32, 32)
+	var material	= THREEx.createAtmosphereMaterial()
+	material.side	= THREE.BackSide
+	material.uniforms.glowColor.value.set(0x00b3ff)
+	material.uniforms.coeficient.value	= 0.5
+	material.uniforms.power.value		= 4.0
+	var mesh	= new THREE.Mesh(geometry, material );
+	mesh.scale.multiplyScalar(1.15);
+	containerEarth.add( mesh );
+	// new THREEx.addAtmosphereMaterial2DatGui(material, datGUI)
+
+	var earthCloud	= THREEx.Planets.createEarthCloud()
+	earthCloud.receiveShadow	= true
+	earthCloud.castShadow	= true
+	containerEarth.add(earthCloud)
+	onRenderFcts.push(function(delta, now){
+		earthCloud.rotation.y += 1/8 * delta;		
+	})
+
+			// On mappe les étoiles sur une sphère
+			var geometry = new THREE.SphereGeometry(9, 32, 32)
+			var material = new THREE.MeshBasicMaterial({
+				map : THREE.ImageUtils
+						.loadTexture('images/galaxy_starfield.png'),
+				side : THREE.BackSide
+			})
+			var starSphere = new THREE.Mesh(geometry, material)
+			scene.add(starSphere)
+
+			renderer = new THREE.WebGLRenderer({
+				antialias : true,
+				alpha : false
+			});
+			renderer.setSize(window.innerWidth, window.innerHeight);
+
+			container.appendChild(renderer.domElement);
+
+			document.addEventListener('mousemove', onDocumentMouseMove, false);
+
+		}
+
+		var htracker = new headtrackr.Tracker({smoothing : true});
+		htracker.init(videoInput, canvasInput);
+		htracker.start();
+		
+				document.addEventListener("facetrackingEvent", function(e) {
+			    
+			    headPosX = -( 300 - e.x ) /2
+			    headPosY = -( 200 - e.y ) /2
+				
+		}, false);
+		
+		
+		// Fonction qui relève la position de la souris
+		function onDocumentMouseMove(event) {
+
+			mouseX = (event.clientX - windowWidth / 2);
+			mouseY = (event.clientY - windowHeight / 2);
+
+		}
+
+		// Fonction qui met à jours les tailles des cadres si on redimensionne la fenêtre
+		function updateSize() {
+
+			if (windowWidth != window.innerWidth
+					|| windowHeight != window.innerHeight) {
+
+				windowWidth = window.innerWidth;
+				windowHeight = window.innerHeight;
+
+				renderer.setSize(windowWidth, windowHeight);
+
+			}
+
+		}
+
+		// Fonction qui lance l'animation de la scène
+		function animate() {
+			/*controls1.update(clock.getDelta() );
+			controls2.update(clock.getDelta() );
+			controls3.update(clock.getDelta() );
+			controls4.update(clock.getDelta() );*/
+			render();
+			requestAnimationFrame(animate);
+		}
+
+		// Fonction de rendu
+		function render() {
+
+			updateSize();
+
+			for (var ii = 0; ii < views.length; ++ii) {
+
+				view = views[ii];
+				camera = view.camera;
+
+				view.updateCamera(camera, scene, headPosX, headPosY);
+
+				var left = Math.floor(windowHeight * view.left);
+				var bottom = Math.floor(windowHeight * view.bottom);
+				var width = Math.floor(windowHeight * view.width);
+				var height = Math.floor(windowHeight * view.height);
+				renderer.setViewport(left, bottom, width, height);
+				renderer.setScissor(left, bottom, width, height);
+				renderer.enableScissorTest(true);
+				renderer.setClearColor(view.background);
+
+				camera.aspect = width / height;
+				camera.updateProjectionMatrix();
+
+				renderer.render(scene, camera);
+			}
+
+		}
+
+		//////////////////////////////////////////////////////////////////////////////////
+		//		loop runner							//
+		//////////////////////////////////////////////////////////////////////////////////
+		var lastTimeMsec= null
+		requestAnimationFrame(function animate(nowMsec){
+			// keep looping
+			requestAnimationFrame( animate );
+			// measure time
+			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec	= nowMsec
+			// call each update function
+			onRenderFcts.forEach(function(onRenderFct){
+				onRenderFct(deltaMsec/1000, nowMsec/1000)
+			})
+		})
+	</script>
+
+</body>
+</html>
