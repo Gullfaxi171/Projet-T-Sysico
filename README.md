@@ -7,7 +7,9 @@ Projet T Sysico (Systèmes de connaissances et d'information) - Arts et Métiers
 Original idea from Robbie Tilton : [Vimeo](http://vimeo.com/59377788).
 
 You can try it on [this link](http://zaloeil.olympe.in/projet-t/)
+
 You will need to make a glass prism to visualize "holograms" (using Pepper's Ghost Effect). Some views can't be displayed without a LeapMotion.
+
 Tutorial for the prism coming soon !
 
 

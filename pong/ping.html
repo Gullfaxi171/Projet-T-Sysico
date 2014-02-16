@@ -35,15 +35,9 @@ a {
 	<script src="../objet-planete/vendor/three.js/build/three.min.js"></script>
 	<script src="../objet-planete/js/Detector.js"></script>
 	<script src="../objet-planete/js/libs/stats.min.js"></script>
-	
-	<script src='../threex.planets.js'></script>
-	<script src='../threex.atmospherematerial.js'></script>
 	<script src='../objet-planete/vendor/three.js/examples/js/libs/dat.gui.min.js'></script>
-	<script src="../threex.atmospheredatgui.js"></script>
-	
 	<script src="../views/views2vues.js"></script>
 
-	<script src="../threeleapcontrols-master/js/leap.min.js"></script>
 
 	<script>
 		// si l'appareil n'est pas compatible avec WebGL, message d'erreur
@@ -51,7 +45,7 @@ a {
 			Detector.addGetWebGLMessage();
 
 		// on cache la souris
-		//document.body.style.cursor = 'none';
+		document.body.style.cursor = 'none';
 
 		// variables principales
 		var container, stats;
@@ -87,12 +81,6 @@ a {
 		
 		
 		
-		
-        //initiate variables
-        var firstValidFrame = null
-        var cameraRadius = 290
-        var rotateY = 90, rotateX = 0, curY = 0
-        var fov = 1.57;
         
         
 
@@ -159,7 +147,7 @@ a {
       scene.add(sphere);
 	
 	onRenderFcts.push(function(delta, now){
-		scene.position.z = 35*Math.sin(4*now+3.14/2);
+		scene.position.z = -35*Math.sin(4*now+3.14/2);
 	})
 
 			
@@ -199,34 +187,13 @@ a {
 		}
 
 		
-		//request animation frame and connect to leap socket
-		Leap.loop(function(frame) {
-        if (frame.valid) {
 
-
-          if (!firstValidFrame) firstValidFrame = frame
-          var t = firstValidFrame.translation(frame)
-
-          //limit y-axis between 0 and 180 degrees
-          curY = map(t[1], -300, 300, 0, 179)
-
-          //assign rotation coordinates
-          rotateX = t[0]
-          rotateY = -curY
-
-          zoom = Math.max(0, t[2] + 200);
-          zoomFactor = 1/(1 + (zoom / 150));
-
-          
-        }
-
-			render();
-      });
 		
 		// Fonction qui lance l'animation de la scène
 		function animate() {
 			
 			requestAnimationFrame(animate);
+			render();
 		}
 
 		// Fonction de rendu
@@ -239,7 +206,7 @@ a {
 				view = views[ii];
 				camera = view.camera;
 
-				view.updateCamera(camera, scene, rotateX, rotateY);
+				view.updateCamera(camera, scene, 0, 0);
 				
 				
 				var left = Math.floor(windowHeight * view.left);
