@@ -2,6 +2,8 @@
 
 Projet T Sysico (Systèmes de connaissances et d'information) - Arts et Métiers ParisTech
 
+![A&M](http://action-internationale.gadzarts.org/uploads/Images/Ingenieurs-Arts-et-Metiers-ParisTech.jpg)
+
 **Project Holo 2.11**
 
 Original idea from Robbie Tilton : [Vimeo](http://vimeo.com/59377788).
