@@ -31,3 +31,7 @@ Exemples sur la page index.htm
 ## Idées à exploiter
 * à partir du headtracking, demo dispo dans `objet-planete/division_terre_headtr`
 * à partir du leapmotion, vous avez des idées ?
+
+
+
+*Florent Gros - Paul Louis - Flavien Ruhla* - *Arts et Métiers ParisTech*
