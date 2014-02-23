@@ -1,4 +1,4 @@
-Page d'accueuil
+Page d'acceuil
 	Zaloeil
 	Raccouci vers des Hologrammes Récents/Favoris
 	Menu
